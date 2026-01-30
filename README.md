@@ -1,5 +1,6 @@
 # meteor-challenge
 Desafio para a vaga de estágio da Tarken
+[UPDATE 2026]: enviar este desafio resolvido com o bônus me permitiu avançar com destaque para a próxima etapa etapa do processo, na qual o RH me julgou não digno
 
 # Execução do código
 

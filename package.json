@@ -1,0 +1,7 @@
+{
+  "name": "meteor-challenge",
+  "private": true,
+  "scripts": {
+    "dev": "npx serve ."
+  }
+}

@@ -1,137 +1,103 @@
 const image = document.getElementById('myImage');
-let canvas = document.createElement('canvas');
+const scanline = document.getElementById('scanline');
 
-canvas.width = image.width;
-canvas.height = image.height;
+// Sprinkle CSS starfield (tiny random dots, no extra DOM weight beyond this)
+(function spawnStars() {
+  const el = document.createElement('div');
+  el.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden';
+  el.innerHTML = Array.from({ length: 70 }, () => {
+    const s = Math.random() > 0.88 ? 2 : 1;
+    const op = 0.15 + Math.random() * 0.55;
+    const dur = (2 + Math.random() * 4).toFixed(1);
+    const del = (Math.random() * 4).toFixed(1);
+    return `<div style="position:absolute;left:${(Math.random()*100).toFixed(2)}%;top:${(Math.random()*100).toFixed(2)}%;width:${s}px;height:${s}px;border-radius:50%;background:#fff;opacity:${op.toFixed(2)};animation:tw ${dur}s ${del}s ease-in-out infinite alternate"></div>`;
+  }).join('');
+  document.body.prepend(el);
+})();
 
-const ctx = canvas.getContext('2d');
-ctx.drawImage(image, 0, 0);
+function runAnalysis() {
+  scanline.classList.add('running');
 
-const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height); // Obtém os dados da imagem no formato de imagem (ImageData)
-const data = imageData.data; // Obtém os valores dos pixels da imagem
+  const canvas = document.createElement('canvas');
+  canvas.width = image.naturalWidth;
+  canvas.height = image.naturalHeight;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(image, 0, 0);
+  const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const w = canvas.width, h = canvas.height;
 
-let pixels = []; // Array para armazenar os pixels da imagem
+  // Pass 1: count stars (white), meteors (red), meteors above water (blue below)
+  let stars = 0, meteors = 0, waterBound = 0;
 
-// Percorre os dados dos pixels e cria um array de pixels
-for (let i = 0; i < data.length; i += 4) {
-  let pixel = [
-    data[i], // Valor do componente vermelho (red)
-    data[i + 1], // Valor do componente verde (green)
-    data[i + 2], // Valor do componente azul (blue)
-    data[i + 3], // Valor do componente alfa (alpha)
-  ];
-
-  pixels.push(pixel); // Adiciona o pixel ao array de pixels
-}
-
-// Função para contar os pixels da imagem
-function countPixels() {
-  let countWhite = 0; // Contador para pixels brancos
-  let countRed = 0; // Contador para pixels vermelhos
-  let countRedWithBlue = 0; // Contador para pixels vermelhos que cairão na água (pixels azuis)
-
-  // Percorre os dados dos pixels
   for (let i = 0; i < data.length; i += 4) {
-    const [red, green, blue, alpha] = data.slice(i, i + 4); // Extrai os valores do pixel atual
+    const r = data[i], g = data[i+1], b = data[i+2], a = data[i+3];
+    if (a !== 255) continue;
 
-    // Verifica se o pixel é branco
-    if (red === 255 && green === 255 && blue === 255 && alpha === 255) {
-      countWhite++;
-    }
+    if (r === 255 && g === 255 && b === 255) { stars++; continue; }
 
-    // Verifica se o pixel é vermelho
-    if (red === 255 && green === 0 && blue === 0 && alpha === 255) {
-      countRed++;
-
-      let y = Math.floor(i / 4 / canvas.width); // Calcula a posição y do pixel na imagem
-      let x = (i / 4) % canvas.width; // Calcula a posição x do pixel na imagem
-
-      let bluePixelFound = false; // Flag para verificar se um pixel azul foi encontrado
-
-      // Percorre a linha vertical do pixel atual em busca de pixels azuis
-      for (
-        let j = y * canvas.width * 4 + x * 4;
-        j < data.length;
-        j += canvas.width * 4
-      ) {
-        let r = data[j];
-        let g = data[j + 1];
-        let b = data[j + 2];
-        let a = data[j + 3];
-
-        // Verifica se o pixel atual é azul
-        if (r === 0 && g === 0 && b === 255 && a === 255) {
-          bluePixelFound = true;
+    if (r === 255 && g === 0 && b === 0) {
+      meteors++;
+      const px = (i / 4) | 0;
+      const x = px % w, y = (px / w) | 0;
+      // scan downward from this pixel for a blue water pixel
+      for (let row = y; row < h; row++) {
+        const j = (row * w + x) * 4;
+        if (data[j] === 0 && data[j+1] === 0 && data[j+2] === 255 && data[j+3] === 255) {
+          waterBound++;
           break;
         }
       }
-
-      if (bluePixelFound) {
-        countRedWithBlue++; // Incrementa o contador de pixels vermelhos com azul
-      }
     }
   }
 
-  console.log('Quantidade de pixels brancos:', countWhite);
-  console.log('Quantidade de pixels vermelhos:', countRed);
-  console.log(
-    'Quantidade de pixels vermelhos com pixel azul:',
-    countRedWithBlue,
-  );
-}
-
-// Função para decodificar uma string binária em uma string de caracteres
-function decodeBinaryString(binaryString) {
-  const binaryChunks = [];
-  for (let i = 0; i < binaryString.length; i += 8) {
-    binaryChunks.push(binaryString.slice(i, i + 8));
-  }
-
-  const decodedChars = binaryChunks.map((chunk) =>
-    String.fromCharCode(parseInt(chunk, 2)),
-  );
-  const decodedString = decodedChars.join('');
-
-  return decodedString;
-}
-
-// Função para encontrar a mensagem oculta na imagem
-function findMessage() {
-  const RED = [255, 0, 0, 255]; // Cor vermelha (red)
-  const WHITE = [255, 255, 255, 255]; // Cor branca (white)
-
-  const redPixelsCount = new Int16Array(image.width); // Array para contar pixels vermelhos
-  const whitePixelsCount = new Int16Array(image.width); // Array para contar pixels brancos
-
-  // Percorre os pixels da imagem
-  for (let y = 0; y < image.height; y++) {
-    for (let x = 0; x < image.width; x++) {
-      const pixel = pixels[x + y * image.width]; // Obtém o pixel atual
-
-      // Verifica se o pixel é vermelho
-      if (pixel.every((value, index) => value === RED[index])) {
-        redPixelsCount[x]++; // Incrementa o contador de pixels vermelhos
-      }
-      // Verifica se o pixel é branco
-      else if (pixel.every((value, index) => value === WHITE[index])) {
-        whitePixelsCount[x]++; // Incrementa o contador de pixels brancos
-      }
+  // Pass 2: column counts → binary strings → hidden message
+  const redCol   = new Int16Array(w);
+  const whiteCol = new Int16Array(w);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const j = (y * w + x) * 4;
+      const r = data[j], g = data[j+1], b = data[j+2], a = data[j+3];
+      if (a !== 255) continue;
+      if (r === 255 && g === 0   && b === 0  ) redCol[x]++;
+      if (r === 255 && g === 255 && b === 255) whiteCol[x]++;
     }
   }
 
-  console.log(whitePixelsCount);
-  let string1 = whitePixelsCount.join(''); // Converte o contador de pixels brancos em uma string
-  string1 = decodeBinaryString(string1); // Decodifica a string binária
-  let string2 = redPixelsCount.join(''); // Converte o contador de pixels vermelhos em uma string
-  string2 = decodeBinaryString(string2); // Decodifica a string binária
+  const decodeBin = str =>
+    (str.match(/.{8}/g) ?? [])
+      .map(c => String.fromCharCode(parseInt(c, 2)))
+      .join('');
 
-  console.log(string1, string2);
+  const message =
+    decodeBin(Array.from(whiteCol).join('')) +
+    decodeBin(Array.from(redCol).join(''));
 
-  return [string1, string2]; // Retorna as strings decodificadas
+  scanline.classList.remove('running');
+  render(stars, meteors, waterBound, message);
 }
 
-// Manipulador de evento para quando a imagem é carregada
-image.onload = () => {
-  countPixels(); // Chama a função para contar os pixels
-  findMessage(); // Chama a função para encontrar a mensagem oculta
-};
+function render(stars, meteors, water, message) {
+  document.getElementById('n-stars').textContent   = stars;
+  document.getElementById('n-meteors').textContent = meteors;
+  document.getElementById('n-water').textContent   = water;
+
+  document.querySelectorAll('.card').forEach((el, i) =>
+    setTimeout(() => el.classList.add('show'), i * 120)
+  );
+
+  const tx   = document.getElementById('transmission');
+  const body = document.getElementById('tx-body');
+  tx.classList.add('show');
+
+  // Typing effect for hidden message
+  const cursor = Object.assign(document.createElement('span'), { className: 'cursor' });
+  body.appendChild(cursor);
+  let i = 0;
+  const type = () => {
+    if (i < message.length) { cursor.before(message[i++]); setTimeout(type, 20); }
+  };
+  setTimeout(type, 600);
+}
+
+image.addEventListener('load', runAnalysis);
+if (image.complete && image.naturalWidth) runAnalysis();

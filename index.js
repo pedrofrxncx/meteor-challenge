@@ -1,3 +1,4 @@
+// DOM element references
 const image = document.getElementById('myImage');
 const scanline = document.getElementById('scanline');
 
@@ -16,8 +17,10 @@ const scanline = document.getElementById('scanline');
 })();
 
 function runAnalysis() {
+  // Trigger visual scanning animation
   scanline.classList.add('running');
 
+  // Prepare canvas for pixel-level image analysis
   const canvas = document.createElement('canvas');
   canvas.width = image.naturalWidth;
   canvas.height = image.naturalHeight;
@@ -63,6 +66,7 @@ function runAnalysis() {
     }
   }
 
+  // Decode binary string to readable text
   const decodeBin = str =>
     (str.match(/.{8}/g) ?? [])
       .map(c => String.fromCharCode(parseInt(c, 2)))
@@ -77,6 +81,7 @@ function runAnalysis() {
 }
 
 function render(stars, meteors, water, message) {
+  // Update stat cards with analysis results
   document.getElementById('n-stars').textContent   = stars;
   document.getElementById('n-meteors').textContent = meteors;
   document.getElementById('n-water').textContent   = water;
@@ -94,7 +99,10 @@ function render(stars, meteors, water, message) {
   body.appendChild(cursor);
   let i = 0;
   const type = () => {
-    if (i < message.length) { cursor.before(message[i++]); setTimeout(type, 20); }
+    if (i < message.length) { 
+      cursor.before(message[i++]); 
+      setTimeout(type, 20); 
+    }
   };
   setTimeout(type, 600);
 }

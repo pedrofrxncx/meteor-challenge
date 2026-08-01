@@ -1,11 +1,16 @@
 # meteor-challenge
+
 Desafio para a vaga de estágio da Tarken
+
+**Challenge Status:** Complete with bonus solution ✓
 
 [UPDATE 2026]: enviar este desafio resolvido com o bônus me permitiu avançar com destaque para a próxima etapa etapa do processo, na qual o RH me julgou não digno
 
 # Execução do código
 
-Para rodar o código, basta salvar os três arquivos em uma pasta e abrir o arquivo index.html. As respostas serão exibidas no console do navegador.
+Para rodar o código, basta salvar os três arquivos em uma pasta e abrir o arquivo index.html. As respostas serão exibidas automaticamente abaixo da imagem.
+
+**Alternativamente:** execute `npm run dev` e acesse http://localhost:3000
 
 # Análise do desafio
  

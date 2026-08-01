@@ -25,6 +25,7 @@
       font-family: 'SF Mono', 'Fira Code', 'Roboto Mono', monospace;
       font-size: 14px;
       line-height: 1.6;
+      letter-spacing: 0.3px;
     }
 
     body {
@@ -57,6 +58,7 @@
       animation: shoot 9s linear infinite;
       pointer-events: none;
       z-index: 0;
+      will-change: transform;
     }
     .comet:nth-child(2) { top: 35%; animation-delay: 4s; animation-duration: 12s; width: 60px; }
 
@@ -111,6 +113,7 @@
       display: block;
       max-width: min(704px, 90vw);
       height: auto;
+      image-rendering: crisp-edges;
     }
 
     .scanline {
@@ -149,9 +152,9 @@
     .card:nth-child(2) { transition-delay: .1s; }
     .card:nth-child(3) { transition-delay: .2s; }
 
-    .card-icon { font-size: 1.1rem; margin-bottom: .4rem; }
+    .card-icon { font-size: 1.1rem; margin-bottom: .4rem; opacity: 0.85; }
     .card-num  { font-size: 2.2rem; font-weight: 700; line-height: 1; margin-bottom: .25rem; }
-    .card-lbl  { font-size: .6rem; letter-spacing: .22em; text-transform: uppercase; color: var(--muted); }
+    .card-lbl  { font-size: .6rem; letter-spacing: .22em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
 
     .c-star  .card-num { color: var(--star); text-shadow: 0 0 14px rgba(255,255,255,.5); }
     .c-red   .card-num { color: var(--red);  text-shadow: 0 0 14px rgba(255,59,59,.5);  }
